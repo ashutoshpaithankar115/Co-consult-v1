@@ -1,15 +1,13 @@
-// Vercel Serverless Function — /api/proxy
-// Proxies all Anthropic API calls server-side so the key stays hidden
-
 export const config = { runtime: 'edge' };
 
 export default async function handler(req) {
   if (req.method === 'OPTIONS') {
     return new Response(null, {
+      status: 200,
       headers: {
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Methods': 'POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type',
+        'Access-Control-Allow-Headers': 'Content-Type, x-api-key, anthropic-version',
       },
     });
   }
@@ -20,11 +18,14 @@ export default async function handler(req) {
 
   const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
   if (!ANTHROPIC_API_KEY) {
-    return new Response('API key not configured', { status: 500 });
+    return new Response(JSON.stringify({ error: 'API key not configured on server' }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+    });
   }
 
   try {
-    const body = await req.json();
+    const body = await req.text();
 
     const anthropicRes = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -33,18 +34,15 @@ export default async function handler(req) {
         'x-api-key': ANTHROPIC_API_KEY,
         'anthropic-version': '2023-06-01',
       },
-      body: JSON.stringify(body),
+      body: body,
     });
-
-    // Stream the response back
-    const headers = {
-      'Access-Control-Allow-Origin': '*',
-      'Content-Type': anthropicRes.headers.get('Content-Type') || 'application/json',
-    };
 
     return new Response(anthropicRes.body, {
       status: anthropicRes.status,
-      headers,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Content-Type': anthropicRes.headers.get('Content-Type') || 'application/json',
+      },
     });
   } catch (err) {
     return new Response(JSON.stringify({ error: err.message }), {

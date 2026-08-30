@@ -7,7 +7,7 @@ export default async function handler(req) {
       headers: {
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Methods': 'POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, x-api-key, anthropic-version',
+        'Access-Control-Allow-Headers': 'Content-Type',
       },
     });
   }
@@ -18,7 +18,7 @@ export default async function handler(req) {
 
   const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
   if (!ANTHROPIC_API_KEY) {
-    return new Response(JSON.stringify({ error: 'API key not configured on server' }), {
+    return new Response(JSON.stringify({ error: 'Missing API key' }), {
       status: 500,
       headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
     });
@@ -27,21 +27,24 @@ export default async function handler(req) {
   try {
     const body = await req.text();
 
-    const anthropicRes = await fetch('https://api.anthropic.com/v1/messages', {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'x-api-key': ANTHROPIC_API_KEY,
         'anthropic-version': '2023-06-01',
       },
-      body: body,
+      body,
     });
 
-    return new Response(anthropicRes.body, {
-      status: anthropicRes.status,
+    const ct = response.headers.get('content-type') || 'application/json';
+
+    return new Response(response.body, {
+      status: response.status,
       headers: {
+        'Content-Type': ct,
         'Access-Control-Allow-Origin': '*',
-        'Content-Type': anthropicRes.headers.get('Content-Type') || 'application/json',
+        'Cache-Control': 'no-cache',
       },
     });
   } catch (err) {

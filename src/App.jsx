@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 
 const API="/api/proxy";
-const MODEL="claude-sonnet-4-20250514";
+const MODEL="claude-sonnet-4-5";
 const MAX_CASES=15;
 const G_DARK="#2d5a27",G_MID="#4a7c3f",G_LIGHT="#e8f5e0",G_RES="#d4edcc",G_BOR="#5a8a4f",G_PALE="#f4faf2";
 const BLACK="#1a1a1a",GRAY1="#333",GRAY2="#666",GRAY3="#999",GRAY4="#ccc",WHITE="#fff";

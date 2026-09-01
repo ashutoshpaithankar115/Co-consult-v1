@@ -1,13 +1,13 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 
 const API="/api/proxy";
-const MODEL="claude-sonnet-4-5";
+const MODEL="claude-sonnet-4-20250514";
 const MAX_CASES=15;
 const G_DARK="#2d5a27",G_MID="#4a7c3f",G_LIGHT="#e8f5e0",G_RES="#d4edcc",G_BOR="#5a8a4f",G_PALE="#f4faf2";
 const BLACK="#1a1a1a",GRAY1="#333",GRAY2="#666",GRAY3="#999",GRAY4="#ccc",WHITE="#fff";
 
 async function streamClaude(messages,system,onChunk){
-  const res=await fetch(API,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:MODEL,max_tokens:1200,system,stream:true,messages})});
+  const res=await fetch(API,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:MODEL,max_tokens:1200,system,stream:false,messages})
   if(!res.ok)throw new Error("API "+res.status);
   const reader=res.body.getReader();const dec=new TextDecoder();let buf="";
   while(true){const{done,value}=await reader.read();if(done)break;buf+=dec.decode(value,{stream:true});const lines=buf.split("\n");buf=lines.pop();for(const line of lines){if(!line.startsWith("data: "))continue;const d=line.slice(6).trim();if(d==="[DONE]")return;try{const e=JSON.parse(d);if(e.type==="content_block_delta"&&e.delta?.type==="text_delta")onChunk(e.delta.text);}catch{}}}

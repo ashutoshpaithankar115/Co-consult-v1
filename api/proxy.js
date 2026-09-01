@@ -12,7 +12,7 @@ export default async function handler(req, res) {
   try {
     const body = typeof req.body === 'string' ? req.body : JSON.stringify(req.body);
     const parsed = JSON.parse(body);
-    const isStream = parsed.stream === true;
+    parsed.stream = false;
 
     const anthropicRes = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -24,22 +24,9 @@ export default async function handler(req, res) {
       body: JSON.stringify(parsed),
     });
 
-    if (isStream) {
-      res.setHeader('Content-Type', 'text/event-stream');
-      res.setHeader('Cache-Control', 'no-cache');
-      res.setHeader('Connection', 'keep-alive');
-      const reader = anthropicRes.body.getReader();
-      const decoder = new TextDecoder();
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        res.write(decoder.decode(value, { stream: true }));
-      }
-      return res.end();
-    } else {
-      const data = await anthropicRes.json();
-      return res.status(anthropicRes.status).json(data);
-    }
+    const data = await anthropicRes.json();
+    return res.status(anthropicRes.status).json(data);
+
   } catch (err) {
     return res.status(500).json({ error: err.message });
   }

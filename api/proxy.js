@@ -7,15 +7,11 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
-  if (!ANTHROPIC_API_KEY) return res.status(500).json({ error: 'NO_API_KEY' });
+  if (!ANTHROPIC_API_KEY) return res.status(500).json({ error: 'Missing API key' });
 
   try {
-    const body = typeof req.body === 'string' ? req.body : JSON.stringify(req.body);
-    let parsed;
-    try { parsed = JSON.parse(body); } catch(e) { return res.status(400).json({ error: 'BAD_JSON', body: body.slice(0,200) }); }
-
+    const parsed = req.body;
     parsed.stream = false;
-    parsed.model = 'claude-opus-4-5';
 
     const anthropicRes = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -27,17 +23,10 @@ export default async function handler(req, res) {
       body: JSON.stringify(parsed),
     });
 
-    const responseText = await anthropicRes.text();
-
-    // Always return 200 with full debug info
-    return res.status(200).json({
-      anthropic_status: anthropicRes.status,
-      response: responseText.slice(0, 2000),
-      model_used: parsed.model,
-      key_prefix: ANTHROPIC_API_KEY.slice(0, 20),
-    });
+    const data = await anthropicRes.json();
+    return res.status(anthropicRes.status).json(data);
 
   } catch (err) {
-    return res.status(200).json({ error: err.message });
+    return res.status(500).json({ error: err.message });
   }
 }

@@ -14,6 +14,11 @@ async function streamClaude(messages,system,onChunk){
   const words=text.split(" ");
   for(let i=0;i<words.length;i+=3){
     onChunk(words.slice(i,i+3).join(" ")+(i+3<words.length?" ":""));
+  }
+}
+  const words=text.split(" ");
+  for(let i=0;i<words.length;i+=3){
+    onChunk(words.slice(i,i+3).join(" ")+(i+3<words.length?" ":""));
   const res=await fetch(API,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:MODEL,max_tokens:1500,system,messages:[{role:"user",content:prompt}]})});
   if(!res.ok)throw new Error("API "+res.status);
   const d=await res.json();return d.content[0].text;

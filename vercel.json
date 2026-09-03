@@ -1,10 +1,6 @@
-async function streamClaude(messages,system,onChunk){
-  const res=await fetch(API,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-5",max_tokens:1200,system,stream:false,messages})});
-  if(!res.ok){const t=await res.text();throw new Error("API "+res.status+" "+t.slice(0,200));}
-  const data=await res.json();
-  const text=data.content?.[0]?.text||"";
-  const words=text.split(" ");
-  for(let i=0;i<words.length;i+=3){
-    onChunk(words.slice(i,i+3).join(" ")+(i+3<words.length?" ":""));
-  }
+{
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": "/api/$1" },
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
 }
